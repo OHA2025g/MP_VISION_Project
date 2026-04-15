@@ -13,8 +13,10 @@ RUN NODE_ENV=production GENERATE_SOURCEMAP=false yarn build
 
 FROM nginx:1.27-alpine
 
+ENV BACKEND_HOST=backend:8000
+
 COPY --from=build /app/build /usr/share/nginx/html
-COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+COPY frontend/nginx/templates/default.conf.template /etc/nginx/templates/default.conf.template
 
 EXPOSE 80
 

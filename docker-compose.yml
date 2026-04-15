@@ -33,12 +33,14 @@ services:
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend/Dockerfile
       args:
         REACT_APP_BACKEND_URL: ""
     container_name: mpvision-frontend
     restart: unless-stopped
+    environment:
+      BACKEND_HOST: backend:8000
     depends_on:
       - backend
     ports:

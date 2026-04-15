@@ -31,6 +31,17 @@ api_router = APIRouter(prefix="/api")
 
 JWT_ALGORITHM = "HS256"
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+
+def _auth_cookie_secure() -> bool:
+    """Secure cookies on HTTPS frontends. Set COOKIE_SECURE=true if TLS terminates at a proxy and FRONTEND_URL is still http."""
+    v = (os.environ.get("COOKIE_SECURE") or "").strip().lower()
+    if v in ("1", "true", "yes", "on"):
+        return True
+    if v in ("0", "false", "no", "off"):
+        return False
+    fe = (os.environ.get("FRONTEND_URL") or "").strip()
+    return fe.startswith("https://")
 logger = logging.getLogger(__name__)
 
 # Display order for 10 pillars (must match SECTOR_DEFS in seed section)
@@ -269,8 +280,9 @@ async def register(req: RegisterRequest, response: Response):
     user_id = str(result.inserted_id)
     access_token = create_access_token(user_id, email, role)
     refresh_token = create_refresh_token(user_id)
-    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=False, samesite="lax", max_age=7200, path="/")
-    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=False, samesite="lax", max_age=604800, path="/")
+    sec = _auth_cookie_secure()
+    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=sec, samesite="lax", max_age=7200, path="/")
+    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=sec, samesite="lax", max_age=604800, path="/")
     return {"id": user_id, "email": email, "name": req.name, "role": role}
 
 @api_router.post("/auth/login")
@@ -300,14 +312,16 @@ async def login(req: LoginRequest, request: Request, response: Response):
     user_id = str(user["_id"])
     access_token = create_access_token(user_id, email, user["role"])
     refresh_token = create_refresh_token(user_id)
-    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=False, samesite="lax", max_age=7200, path="/")
-    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=False, samesite="lax", max_age=604800, path="/")
+    sec = _auth_cookie_secure()
+    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=sec, samesite="lax", max_age=7200, path="/")
+    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=sec, samesite="lax", max_age=604800, path="/")
     return {"id": user_id, "email": email, "name": user["name"], "role": user["role"]}
 
 @api_router.post("/auth/logout")
 async def logout(response: Response):
-    response.delete_cookie("access_token", path="/")
-    response.delete_cookie("refresh_token", path="/")
+    sec = _auth_cookie_secure()
+    response.delete_cookie("access_token", path="/", secure=sec, httponly=True, samesite="lax")
+    response.delete_cookie("refresh_token", path="/", secure=sec, httponly=True, samesite="lax")
     return {"message": "Logged out"}
 
 @api_router.get("/auth/me")
@@ -328,7 +342,8 @@ async def refresh_token_endpoint(request: Request, response: Response):
             raise HTTPException(status_code=401, detail="User not found")
         user_id = str(user["_id"])
         new_access = create_access_token(user_id, user["email"], user["role"])
-        response.set_cookie(key="access_token", value=new_access, httponly=True, secure=False, samesite="lax", max_age=7200, path="/")
+        sec = _auth_cookie_secure()
+        response.set_cookie(key="access_token", value=new_access, httponly=True, secure=sec, samesite="lax", max_age=7200, path="/")
         return {"message": "Token refreshed"}
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
