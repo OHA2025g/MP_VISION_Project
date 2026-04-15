@@ -1370,41 +1370,35 @@ def _normalize_cors_origin(url: str) -> str:
 
 
 def _cors_allow_origins() -> List[str]:
-    """
-    Browsers require an explicit Allow-Origin (not *) when credentials (cookies) are used.
-    Set FRONTEND_URL to your deployed UI origin, e.g. https://mp-vision.demo.agrayianailabs.com
-    Optional: CORS_ORIGINS=* keeps localhost dev origins plus FRONTEND_URL, or pass a
-    comma-separated list of extra allowed origins.
-    """
-    raw = (os.environ.get("CORS_ORIGINS") or "").strip()
-    fe = _normalize_cors_origin(os.environ.get("FRONTEND_URL") or "http://localhost:3000") or "http://localhost:3000"
-
-    if raw == "*":
-        return list(
-            dict.fromkeys(
-                [
-                    "http://localhost:3000",
-                    "http://127.0.0.1:3000",
-                    fe,
-                ]
-            )
-        )
+    raw = os.environ.get("CORS_ORIGINS", "")
+    fe = _normalize_cors_origin(
+        os.environ.get("FRONTEND_URL") or "http://localhost:3000"
+    )
 
     origins: List[str] = []
-    if raw and raw != "*":
+
+    if raw.strip():
         for part in raw.split(","):
             o = _normalize_cors_origin(part)
             if o and o != "*":
                 origins.append(o)
+
     if fe:
         origins.append(fe)
-    out = list(dict.fromkeys(origins))
-    return out if out else ["http://localhost:3000"]
 
+    origins.extend([
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ])
+
+    return list(dict.fromkeys(origins))
+
+allowed_origins = _cors_allow_origins()
+print("CORS allowed origins:", allowed_origins)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_cors_allow_origins(),
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
