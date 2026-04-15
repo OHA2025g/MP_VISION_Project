@@ -13,6 +13,8 @@ RUN NODE_ENV=production GENERATE_SOURCEMAP=false yarn build
 
 FROM nginx:1.27-alpine
 
+# Only substitute BACKEND_HOST; default envsubst replaces every $VAR and breaks nginx ($uri, $host, …).
+ENV NGINX_ENVSUBST_FILTER=^BACKEND_HOST$
 ENV BACKEND_HOST=backend:8000
 
 COPY --from=build /app/build /usr/share/nginx/html

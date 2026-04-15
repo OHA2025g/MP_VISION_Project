@@ -41,6 +41,7 @@ services:
     restart: unless-stopped
     environment:
       BACKEND_HOST: backend:8000
+      NGINX_ENVSUBST_FILTER: ^BACKEND_HOST$
     depends_on:
       - backend
     ports:
