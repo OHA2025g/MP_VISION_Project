@@ -1349,9 +1349,21 @@ async def shutdown():
 app.include_router(api_router)
 
 
+def _normalize_cors_origin(url: str) -> str:
+    o = (url or "").strip()
+    return o.rstrip("/") if o else ""
+
+
 def _cors_allow_origins() -> List[str]:
+    """
+    Browsers require an explicit Allow-Origin (not *) when credentials (cookies) are used.
+    Set FRONTEND_URL to your deployed UI origin, e.g. https://mp-vision.demo.agrayianailabs.com
+    Optional: CORS_ORIGINS=* keeps localhost dev origins plus FRONTEND_URL, or pass a
+    comma-separated list of extra allowed origins.
+    """
     raw = (os.environ.get("CORS_ORIGINS") or "").strip()
-    fe = (os.environ.get("FRONTEND_URL") or "http://localhost:3000").strip()
+    fe = _normalize_cors_origin(os.environ.get("FRONTEND_URL") or "http://localhost:3000") or "http://localhost:3000"
+
     if raw == "*":
         return list(
             dict.fromkeys(
@@ -1362,7 +1374,17 @@ def _cors_allow_origins() -> List[str]:
                 ]
             )
         )
-    return [fe] if fe else ["http://localhost:3000"]
+
+    origins: List[str] = []
+    if raw and raw != "*":
+        for part in raw.split(","):
+            o = _normalize_cors_origin(part)
+            if o and o != "*":
+                origins.append(o)
+    if fe:
+        origins.append(fe)
+    out = list(dict.fromkeys(origins))
+    return out if out else ["http://localhost:3000"]
 
 
 app.add_middleware(
