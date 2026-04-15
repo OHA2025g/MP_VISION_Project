@@ -1,0 +1,49 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: mpvision-mongo
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mpvision-backend
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      MONGO_URL: mongodb://mongo:27017
+      DB_NAME: mp_vision
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-me}
+      CORS_ORIGINS: "*"
+      FRONTEND_URL: http://localhost:4510
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@mpvision.gov.in}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+    # no host port needed; frontend proxies internally
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_BACKEND_URL: ""
+    container_name: mpvision-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "4510:80"
+
+volumes:
+  mongo_data:
+

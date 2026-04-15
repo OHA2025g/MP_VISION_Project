@@ -1,0 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: 'IBM Plex Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #FDFBF7;
+  color: #0A1930;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Outfit', sans-serif;
+}
+
+@layer base {
+  :root {
+    --background: 43 50% 98%;
+    --foreground: 213 67% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 213 67% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 213 67% 12%;
+    --primary: 199 88% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 43 76% 53%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 40 23% 90%;
+    --muted-foreground: 215 16% 35%;
+    --accent: 40 23% 94%;
+    --accent-foreground: 213 67% 12%;
+    --destructive: 0 72% 47%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 40 18% 86%;
+    --input: 40 18% 86%;
+    --ring: 199 88% 48%;
+    --chart-1: 199 88% 48%;
+    --chart-2: 43 76% 53%;
+    --chart-3: 24 100% 45%;
+    --chart-4: 122 39% 34%;
+    --chart-5: 262 47% 40%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer base {
+  [data-debug-wrapper="true"] {
+    display: contents !important;
+  }
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: #E2DFD2;
+  border-radius: 3px;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: fadeUp 0.4s ease-out forwards;
+}
